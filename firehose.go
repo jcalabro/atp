@@ -21,22 +21,21 @@ func firehoseCmd() *cli.Command {
 		Name:  "firehose",
 		Usage: "Stream live firehose events",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "relay", Value: "wss://bsky.network", Usage: "Relay WebSocket URL"},
+			&cli.StringFlag{Name: "url", Value: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos", Usage: "Subscription WebSocket URL (repos or labels)"},
 			&cli.IntFlag{Name: "cursor", Value: 0, Usage: "Resume from cursor position"},
 			&cli.StringFlag{Name: "collection", Usage: "Filter by collection NSID"},
 			&cli.StringFlag{Name: "action", Usage: "Filter by action (create/update/delete)"},
 			&cli.BoolFlag{Name: "plain", Usage: "Plain JSON lines to stdout (no TUI)"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			relay := c.String("relay")
+			subURL := c.String("url")
 			cursor := c.Int("cursor")
 			collection := c.String("collection")
 			action := c.String("action")
 			plain := c.Bool("plain")
+			isLabels := strings.Contains(subURL, "subscribeLabels")
 
-			opts := streaming.Options{
-				URL: relay + "/xrpc/com.atproto.sync.subscribeRepos",
-			}
+			opts := streaming.Options{URL: subURL}
 			if cursor > 0 {
 				opts.Cursor = gt.Some(int64(cursor))
 			}
@@ -52,9 +51,15 @@ func firehoseCmd() *cli.Command {
 			}
 
 			if plain {
+				if isLabels {
+					return labelPlain(ctx, opts, c)
+				}
 				return firehosePlain(ctx, opts, collection, action, c)
 			}
 
+			if isLabels {
+				return labelTUI(ctx, opts)
+			}
 			return firehoseTUI(ctx, opts, collection, action)
 		},
 	}
@@ -98,6 +103,100 @@ func firehosePlain(ctx context.Context, opts streaming.Options, collection, acti
 		}
 	}
 	return nil
+}
+
+func labelPlain(ctx context.Context, opts streaming.Options, c *cli.Command) error {
+	client, err := streaming.NewClient(opts)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = client.Close() }()
+
+	enc := json.NewEncoder(c.Root().Writer)
+
+	for evt, err := range client.Events(ctx) {
+		if err != nil {
+			return err
+		}
+
+		for _, label := range evt.Labels() {
+			record := map[string]any{
+				"seq": evt.Seq,
+				"src": label.Src,
+				"uri": label.URI,
+				"val": label.Val,
+				"neg": label.Neg.ValOr(false),
+				"cts": label.Cts,
+			}
+			if err := enc.Encode(record); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func labelTUI(ctx context.Context, opts streaming.Options) error {
+	m := newFirehoseModel(opts, "", "")
+	m.isLabels = true
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
+	go func() {
+		client, err := streaming.NewClient(opts)
+		if err != nil {
+			p.Send(tea.Quit())
+			return
+		}
+		defer func() { _ = client.Close() }()
+
+		subCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		const flushInterval = 50 * time.Millisecond
+		var batch []firehoseOp
+		ticker := time.NewTicker(flushInterval)
+		defer ticker.Stop()
+
+		flush := func() {
+			if len(batch) > 0 {
+				p.Send(firehoseBatchMsg(batch))
+				batch = nil
+			}
+		}
+
+		for evt, err := range client.Events(subCtx) {
+			if err != nil {
+				flush()
+				p.Send(firehoseErrMsg{err: err})
+				return
+			}
+
+			for _, label := range evt.Labels() {
+				batch = append(batch, firehoseOp{
+					seq:     evt.Seq,
+					isLabel: true,
+					src:     label.Src,
+					uri:     label.URI,
+					val:     label.Val,
+					neg:     label.Neg.ValOr(false),
+					cts:     label.Cts,
+				})
+			}
+
+			select {
+			case <-ticker.C:
+				flush()
+			default:
+			}
+		}
+		flush()
+	}()
+
+	_, err := p.Run()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "TUI error: %v\n", err)
+	}
+	return err
 }
 
 func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action string) error {
@@ -182,6 +281,14 @@ type firehoseOp struct {
 	collection string
 	repo       string
 	rkey       string
+
+	// Label fields.
+	isLabel bool
+	src     string
+	uri     string
+	val     string
+	neg     bool
+	cts     string
 }
 
 // Batched message: delivers many ops at once to avoid flooding the bubbletea
@@ -198,6 +305,7 @@ type firehoseModel struct {
 	opts       streaming.Options
 	collection string
 	action     string
+	isLabels   bool
 
 	viewport viewport.Model
 	lines    []string
@@ -321,6 +429,25 @@ func (m *firehoseModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func formatOp(op firehoseOp) string {
+	if op.isLabel {
+		record := map[string]any{
+			"seq": op.seq,
+			"src": op.src,
+			"uri": op.uri,
+			"val": op.val,
+			"neg": op.neg,
+			"cts": op.cts,
+		}
+		raw, err := json.Marshal(record)
+		if err != nil {
+			return fmt.Sprintf("{\"error\":%q}", err.Error())
+		}
+		if op.neg {
+			return styleDelete.Render(string(raw))
+		}
+		return styleLabel.Render(string(raw))
+	}
+
 	record := map[string]any{
 		"seq":        op.seq,
 		"action":     op.action,
