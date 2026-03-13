@@ -13,7 +13,7 @@ func main() {
 		Name:  "atp",
 		Usage: "AT Protocol command-line tool",
 		Commands: []*cli.Command{
-			firehoseCmd(),
+			subscribeCmd(),
 			resolveCmd(),
 			recordCmd(),
 			repoCmd(),

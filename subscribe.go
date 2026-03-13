@@ -16,10 +16,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func firehoseCmd() *cli.Command {
+func subscribeCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "firehose",
-		Usage: "Stream live firehose events",
+		Name:  "subscribe",
+		Usage: "Stream live subscription events",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "url", Value: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos", Usage: "Subscription WebSocket URL (repos or labels)"},
 			&cli.IntFlag{Name: "cursor", Value: 0, Usage: "Resume from cursor position"},
@@ -54,18 +54,18 @@ func firehoseCmd() *cli.Command {
 				if isLabels {
 					return labelPlain(ctx, opts, c)
 				}
-				return firehosePlain(ctx, opts, collection, action, c)
+				return repoPlain(ctx, opts, collection, action, c)
 			}
 
 			if isLabels {
 				return labelTUI(ctx, opts)
 			}
-			return firehoseTUI(ctx, opts, collection, action)
+			return repoTUI(ctx, opts, collection, action)
 		},
 	}
 }
 
-func firehosePlain(ctx context.Context, opts streaming.Options, collection, action string, c *cli.Command) error {
+func repoPlain(ctx context.Context, opts streaming.Options, collection, action string, c *cli.Command) error {
 	client, err := streaming.NewClient(opts)
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func labelPlain(ctx context.Context, opts streaming.Options, c *cli.Command) err
 }
 
 func labelTUI(ctx context.Context, opts streaming.Options) error {
-	m := newFirehoseModel(opts, "", "")
+	m := newSubscribeModel(opts, "", "")
 	m.isLabels = true
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
@@ -153,13 +153,13 @@ func labelTUI(ctx context.Context, opts streaming.Options) error {
 		defer cancel()
 
 		const flushInterval = 50 * time.Millisecond
-		var batch []firehoseOp
+		var batch []subscribeOp
 		ticker := time.NewTicker(flushInterval)
 		defer ticker.Stop()
 
 		flush := func() {
 			if len(batch) > 0 {
-				p.Send(firehoseBatchMsg(batch))
+				p.Send(subscribeBatchMsg(batch))
 				batch = nil
 			}
 		}
@@ -167,12 +167,12 @@ func labelTUI(ctx context.Context, opts streaming.Options) error {
 		for evt, err := range client.Events(subCtx) {
 			if err != nil {
 				flush()
-				p.Send(firehoseErrMsg{err: err})
+				p.Send(subscribeErrMsg{err: err})
 				return
 			}
 
 			for _, label := range evt.Labels() {
-				batch = append(batch, firehoseOp{
+				batch = append(batch, subscribeOp{
 					seq:     evt.Seq,
 					isLabel: true,
 					src:     label.Src,
@@ -199,8 +199,8 @@ func labelTUI(ctx context.Context, opts streaming.Options) error {
 	return err
 }
 
-func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action string) error {
-	m := newFirehoseModel(opts, collection, action)
+func repoTUI(ctx context.Context, opts streaming.Options, collection, action string) error {
+	m := newSubscribeModel(opts, collection, action)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	// Start streaming in background, batching ops to avoid flooding
@@ -217,13 +217,13 @@ func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action
 		defer cancel()
 
 		const flushInterval = 50 * time.Millisecond
-		var batch []firehoseOp
+		var batch []subscribeOp
 		ticker := time.NewTicker(flushInterval)
 		defer ticker.Stop()
 
 		flush := func() {
 			if len(batch) > 0 {
-				p.Send(firehoseBatchMsg(batch))
+				p.Send(subscribeBatchMsg(batch))
 				batch = nil
 			}
 		}
@@ -231,7 +231,7 @@ func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action
 		for evt, err := range client.Events(subCtx) {
 			if err != nil {
 				flush()
-				p.Send(firehoseErrMsg{err: err})
+				p.Send(subscribeErrMsg{err: err})
 				return
 			}
 
@@ -245,7 +245,7 @@ func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action
 				if action != "" && string(op.Action) != action {
 					continue
 				}
-				batch = append(batch, firehoseOp{
+				batch = append(batch, subscribeOp{
 					seq:        evt.Seq,
 					action:     string(op.Action),
 					collection: op.Collection,
@@ -275,7 +275,7 @@ func firehoseTUI(ctx context.Context, opts streaming.Options, collection, action
 
 const maxLines = 1000
 
-type firehoseOp struct {
+type subscribeOp struct {
 	seq        int64
 	action     string
 	collection string
@@ -293,15 +293,15 @@ type firehoseOp struct {
 
 // Batched message: delivers many ops at once to avoid flooding the bubbletea
 // message queue and starving key input.
-type firehoseBatchMsg []firehoseOp
+type subscribeBatchMsg []subscribeOp
 
-type firehoseErrMsg struct {
+type subscribeErrMsg struct {
 	err error
 }
 
 type tickMsg time.Time
 
-type firehoseModel struct {
+type subscribeModel struct {
 	opts       streaming.Options
 	collection string
 	action     string
@@ -322,8 +322,8 @@ type firehoseModel struct {
 	ready    bool
 }
 
-func newFirehoseModel(opts streaming.Options, collection, action string) *firehoseModel {
-	return &firehoseModel{
+func newSubscribeModel(opts streaming.Options, collection, action string) *subscribeModel {
+	return &subscribeModel{
 		opts:       opts,
 		collection: collection,
 		action:     action,
@@ -332,7 +332,7 @@ func newFirehoseModel(opts streaming.Options, collection, action string) *fireho
 	}
 }
 
-func (m *firehoseModel) Init() tea.Cmd {
+func (m *subscribeModel) Init() tea.Cmd {
 	return tickCmd()
 }
 
@@ -342,7 +342,7 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-func (m *firehoseModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *subscribeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -378,7 +378,7 @@ func (m *firehoseModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.GotoBottom()
 		}
 
-	case firehoseBatchMsg:
+	case subscribeBatchMsg:
 		// Always count for stats, but only buffer lines when not paused.
 		for _, op := range msg {
 			m.total++
@@ -398,7 +398,7 @@ func (m *firehoseModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	case firehoseErrMsg:
+	case subscribeErrMsg:
 		m.connErr = msg.err
 
 	case tickMsg:
@@ -428,7 +428,7 @@ func (m *firehoseModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func formatOp(op firehoseOp) string {
+func formatOp(op subscribeOp) string {
 	if op.isLabel {
 		record := map[string]any{
 			"seq": op.seq,
@@ -462,7 +462,7 @@ func formatOp(op firehoseOp) string {
 	return actionStyle(op.action).Render(string(raw))
 }
 
-func (m *firehoseModel) View() string {
+func (m *subscribeModel) View() string {
 	if !m.ready {
 		return "initializing..."
 	}
