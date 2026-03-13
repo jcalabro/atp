@@ -1,4 +1,4 @@
-module github.com/jcalabro/mono/atp
+module github.com/jcalabro/atp
 
 go 1.26
 
