@@ -133,7 +133,7 @@ func listCollections(ctx context.Context, c *cli.Command, repo string, jsonOut b
 }
 
 func resolvePDS(ctx context.Context, input string) (string, error) {
-	id, err := atmos.ParseAtIdentifier(input)
+	id, err := atmos.ParseATIdentifier(input)
 	if err != nil {
 		return "", fmt.Errorf("invalid identifier %q: %w", input, err)
 	}

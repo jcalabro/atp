@@ -28,7 +28,7 @@ func resolveCmd() *cli.Command {
 			jsonOut := c.Bool("json")
 			didOnly := c.Bool("did-only")
 
-			id, err := atmos.ParseAtIdentifier(input)
+			id, err := atmos.ParseATIdentifier(input)
 			if err != nil {
 				return fmt.Errorf("invalid identifier %q: %w", input, err)
 			}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jcalabro/atmos"
+	"github.com/jcalabro/atmos/cbor"
 	"github.com/urfave/cli/v3"
 )
 
@@ -57,8 +58,8 @@ func syntaxCmd() *cli.Command {
 				u, e := atmos.ParseURI(val)
 				err, parsed = e, string(u)
 			case "cid":
-				ci, e := atmos.ParseCID(val)
-				err, parsed = e, string(ci)
+				ci, e := cbor.ParseCIDString(val)
+				err, parsed = e, ci.String()
 			default:
 				return fmt.Errorf("unknown syntax type %q (valid: did, handle, nsid, at-uri, tid, record-key, datetime, language, uri, cid)", typ)
 			}

@@ -44,7 +44,7 @@ func repoExportCmd() *cli.Command {
 			}
 
 			input := c.Args().First()
-			id, err := atmos.ParseAtIdentifier(input)
+			id, err := atmos.ParseATIdentifier(input)
 			if err != nil {
 				return fmt.Errorf("invalid identifier: %w", err)
 			}
