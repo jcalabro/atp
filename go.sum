@@ -26,8 +26,8 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 h1:5RVFMOWjMyRy8cARdy79nAmgYw3h
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1/go.mod h1:ZXNYxsqcloTdSy/rNShjYzMhyjf0LaoftYK0p+A3h40=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
-github.com/jcalabro/atmos v0.0.5 h1:+9Nb7oPuxUKB9pIfbqwq20C6+2ab16vmkOmHRk7mhaE=
-github.com/jcalabro/atmos v0.0.5/go.mod h1:amGt2FV02jkc1z+uybgnYimI2ljv2EGQ4D72a/Z9g8o=
+github.com/jcalabro/atmos v0.0.6 h1:+Oqgm0YRZVTue0WQ/iQ+WvqP1TwIhGbCAzENOebPMQg=
+github.com/jcalabro/atmos v0.0.6/go.mod h1:amGt2FV02jkc1z+uybgnYimI2ljv2EGQ4D72a/Z9g8o=
 github.com/jcalabro/gt v0.0.11 h1:VjXWBrMvurwVpSNOSNXjLkxbv82/QmGRApQu9Vx6nB4=
 github.com/jcalabro/gt v0.0.11/go.mod h1:3qTs2C49vvNGCq539/uPZhiQc8h1XnfdNCBu1B2ZC+Q=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=

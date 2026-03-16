@@ -9,12 +9,15 @@ import (
 	"os"
 	"sort"
 
+	"time"
+
 	"github.com/jcalabro/atmos"
 	"github.com/jcalabro/atmos/cbor"
 	"github.com/jcalabro/atmos/identity"
 	"github.com/jcalabro/atmos/repo"
 	"github.com/jcalabro/atmos/sync"
 	"github.com/jcalabro/atmos/xrpc"
+	"github.com/jcalabro/gt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -61,7 +64,10 @@ func repoExportCmd() *cli.Command {
 			}
 
 			sc := sync.NewClient(sync.Options{
-				Client: &xrpc.Client{Host: pds},
+				Client: &xrpc.Client{
+					Host:       pds,
+					HTTPClient: gt.Some(xrpc.NewHTTPClient(10 * time.Minute)),
+				},
 			})
 
 			body, err := sc.GetRepoStream(ctx, ident.DID, "")
