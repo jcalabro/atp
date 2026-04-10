@@ -22,10 +22,12 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
-github.com/jcalabro/atmos v0.0.13 h1:JrAf3v7eEPhI+OFwSFycy3OPErpk6fLd8OvHLhOlsDU=
-github.com/jcalabro/atmos v0.0.13/go.mod h1:s6uECO5lvHzphXgo5UviYH4YlJ82ndbD303m23nLP8Q=
+github.com/jcalabro/atmos v0.0.14 h1:jJAULq0ve47cElsUpACMQ6GO91CEIS6jkWI8cwSGR7U=
+github.com/jcalabro/atmos v0.0.14/go.mod h1:gbQS/TIL1K2hVCwf2cCx8jytq9mENvs5KWCSSfMzFEY=
 github.com/jcalabro/gt v0.0.11 h1:VjXWBrMvurwVpSNOSNXjLkxbv82/QmGRApQu9Vx6nB4=
 github.com/jcalabro/gt v0.0.11/go.mod h1:3qTs2C49vvNGCq539/uPZhiQc8h1XnfdNCBu1B2ZC+Q=
+github.com/jcalabro/jttp v0.0.1 h1:VU3/OqPTRykNwL/XtK+sUzj//ToA12OojYh2QzDQjlo=
+github.com/jcalabro/jttp v0.0.1/go.mod h1:xN8GTKJcy8YS9RpUz+ta6N9HcaiSuMEbR6agdSjFTeA=
 github.com/klauspost/compress v1.18.4 h1:RPhnKRAQ4Fh8zU2FY/6ZFDwTVTxgJ/EMydqSTzE9a2c=
 github.com/klauspost/compress v1.18.4/go.mod h1:R0h/fSBs8DE4ENlcrlib3PsXS61voFxhIs2DeRhCvJ4=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
