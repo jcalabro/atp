@@ -74,31 +74,33 @@ func repoPlain(ctx context.Context, opts streaming.Options, collection, action s
 
 	enc := json.NewEncoder(c.Root().Writer)
 
-	for evt, err := range client.Events(ctx) {
+	for batch, err := range client.Events(ctx) {
 		if err != nil {
 			return err
 		}
 
-		for op, err := range evt.Operations() {
-			if err != nil {
-				continue
-			}
-			if collection != "" && op.Collection != collection {
-				continue
-			}
-			if action != "" && string(op.Action) != action {
-				continue
-			}
+		for _, evt := range batch {
+			for op, err := range evt.Operations() {
+				if err != nil {
+					continue
+				}
+				if collection != "" && op.Collection != collection {
+					continue
+				}
+				if action != "" && string(op.Action) != action {
+					continue
+				}
 
-			record := map[string]any{
-				"seq":        evt.Seq,
-				"action":     string(op.Action),
-				"collection": op.Collection,
-				"repo":       op.Repo,
-				"rkey":       op.RKey,
-			}
-			if err := enc.Encode(record); err != nil {
-				return err
+				record := map[string]any{
+					"seq":        evt.Seq,
+					"action":     string(op.Action),
+					"collection": op.Collection,
+					"repo":       op.Repo,
+					"rkey":       op.RKey,
+				}
+				if err := enc.Encode(record); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -114,22 +116,24 @@ func labelPlain(ctx context.Context, opts streaming.Options, c *cli.Command) err
 
 	enc := json.NewEncoder(c.Root().Writer)
 
-	for evt, err := range client.Events(ctx) {
+	for batch, err := range client.Events(ctx) {
 		if err != nil {
 			return err
 		}
 
-		for _, label := range evt.Labels() {
-			record := map[string]any{
-				"seq": evt.Seq,
-				"src": label.Src,
-				"uri": label.URI,
-				"val": label.Val,
-				"neg": label.Neg.ValOr(false),
-				"cts": label.Cts,
-			}
-			if err := enc.Encode(record); err != nil {
-				return err
+		for _, evt := range batch {
+			for _, label := range evt.Labels() {
+				record := map[string]any{
+					"seq": evt.Seq,
+					"src": label.Src,
+					"uri": label.URI,
+					"val": label.Val,
+					"neg": label.Neg.ValOr(false),
+					"cts": label.Cts,
+				}
+				if err := enc.Encode(record); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -164,23 +168,25 @@ func labelTUI(ctx context.Context, opts streaming.Options) error {
 			}
 		}
 
-		for evt, err := range client.Events(subCtx) {
+		for evtBatch, err := range client.Events(subCtx) {
 			if err != nil {
 				flush()
 				p.Send(subscribeErrMsg{err: err})
 				return
 			}
 
-			for _, label := range evt.Labels() {
-				batch = append(batch, subscribeOp{
-					seq:     evt.Seq,
-					isLabel: true,
-					src:     label.Src,
-					uri:     label.URI,
-					val:     label.Val,
-					neg:     label.Neg.ValOr(false),
-					cts:     label.Cts,
-				})
+			for _, evt := range evtBatch {
+				for _, label := range evt.Labels() {
+					batch = append(batch, subscribeOp{
+						seq:     evt.Seq,
+						isLabel: true,
+						src:     label.Src,
+						uri:     label.URI,
+						val:     label.Val,
+						neg:     label.Neg.ValOr(false),
+						cts:     label.Cts,
+					})
+				}
 			}
 
 			select {
@@ -228,30 +234,32 @@ func repoTUI(ctx context.Context, opts streaming.Options, collection, action str
 			}
 		}
 
-		for evt, err := range client.Events(subCtx) {
+		for evtBatch, err := range client.Events(subCtx) {
 			if err != nil {
 				flush()
 				p.Send(subscribeErrMsg{err: err})
 				return
 			}
 
-			for op, err := range evt.Operations() {
-				if err != nil {
-					continue
+			for _, evt := range evtBatch {
+				for op, err := range evt.Operations() {
+					if err != nil {
+						continue
+					}
+					if collection != "" && op.Collection != collection {
+						continue
+					}
+					if action != "" && string(op.Action) != action {
+						continue
+					}
+					batch = append(batch, subscribeOp{
+						seq:        evt.Seq,
+						action:     string(op.Action),
+						collection: op.Collection,
+						repo:       op.Repo,
+						rkey:       op.RKey,
+					})
 				}
-				if collection != "" && op.Collection != collection {
-					continue
-				}
-				if action != "" && string(op.Action) != action {
-					continue
-				}
-				batch = append(batch, subscribeOp{
-					seq:        evt.Seq,
-					action:     string(op.Action),
-					collection: op.Collection,
-					repo:       op.Repo,
-					rkey:       op.RKey,
-				})
 			}
 
 			// Flush if ticker has fired (non-blocking check).

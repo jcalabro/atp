@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.5
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/jcalabro/atmos v0.0.11
+	github.com/jcalabro/atmos v0.0.13
 	github.com/jcalabro/gt v0.0.11
 	github.com/urfave/cli/v3 v3.3.3
 )
