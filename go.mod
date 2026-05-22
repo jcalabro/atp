@@ -6,12 +6,13 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/jcalabro/atmos v0.1.0
 	github.com/jcalabro/gt v0.0.12
+	github.com/jcalabro/jttp v0.0.4
+	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/urfave/cli/v3 v3.3.3
 )
 
 require (
 	github.com/coder/websocket v1.8.14 // indirect
-	github.com/jcalabro/jttp v0.0.4 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
