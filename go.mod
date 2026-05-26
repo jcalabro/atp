@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/adrg/xdg v0.5.3
-	github.com/jcalabro/atmos v0.1.2
+	github.com/jcalabro/atmos v0.1.3
 	github.com/jcalabro/gt v0.0.12
 	github.com/jcalabro/jttp v0.0.4
 	github.com/mattn/go-sqlite3 v1.14.44
